@@ -16,7 +16,7 @@
     "build": "npm run next:build",
     "start": "concurrently \"npm run next:start\" \"npm run server\"",
     "start:docker": "concurrently \"next start -H 0.0.0.0\" \"npm run server\"",
-    "test": "node --test \"tests/unit/**/*.test.js\" \"tests/integration/**/*.test.js\" \"tests/server/**/*.test.js\" \"tests/e2e/**/*.test.js\" \"tests/sim/**/*.test.js\""
+    "test": "node --test"
   },
   "dependencies": {
     "busboy": "^1.6.0",
