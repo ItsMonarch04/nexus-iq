@@ -9,11 +9,39 @@ const CATALOG_PAGE_CAP = 20; // /v1/models pages are ≤1000 ids; this is a runa
 
 // Pricing is a static estimate (per 1M tokens) used for preflight cost math
 // when no live source exists; every entry is marked `estimate: true`.
+// Figures verified against platform.claude.com/docs pricing + model overview,
+// 2026-07 (Opus 4.8 $5/$25 · 1M ctx; Sonnet 4.6 $3/$15 · 1M ctx; Haiku 4.5
+// $1/$5 · 200K ctx). Re-check on the next model launch — stale numbers here
+// feed BOTH preflight estimates and the live budget meter.
 const STATIC_CATALOG = [
-  { id: "claude-opus-4-8", name: "Claude Opus 4.8", family: "anthropic", ctx: 200_000, pricing: { inUSDper1M: 15, outUSDper1M: 75 }, snapshot: "claude-opus-4-8", estimate: true },
-  { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", family: "anthropic", ctx: 200_000, pricing: { inUSDper1M: 3, outUSDper1M: 15 }, snapshot: "claude-sonnet-4-6", estimate: true },
+  { id: "claude-opus-4-8", name: "Claude Opus 4.8", family: "anthropic", ctx: 1_000_000, pricing: { inUSDper1M: 5, outUSDper1M: 25 }, snapshot: "claude-opus-4-8", estimate: true },
+  { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", family: "anthropic", ctx: 1_000_000, pricing: { inUSDper1M: 3, outUSDper1M: 15 }, snapshot: "claude-sonnet-4-6", estimate: true },
   { id: "claude-haiku-4-5", name: "Claude Haiku 4.5", family: "anthropic", ctx: 200_000, pricing: { inUSDper1M: 1, outUSDper1M: 5 }, snapshot: "claude-haiku-4-5", estimate: true },
 ];
+
+// Current-generation Anthropic models REMOVED the sampling knobs: sending
+// temperature/top_p/top_k to Opus 4.7+/Sonnet 5/Fable 5 is a hard 400
+// (non-retryable — the affected unit would quarantine). Steering is by prompt
+// instead. Prefix match so dated snapshots inherit. This is the fast path; the
+// parameter-rejection 400 retry in complete() is the backstop for any model
+// released after this list (or a snapshot the prefix misses).
+const NO_SAMPLING_PREFIXES = [
+  "claude-opus-4-7", "claude-opus-4-8", "claude-sonnet-5", "claude-fable-5", "claude-mythos-5",
+];
+export function rejectsSampling(model) {
+  const id = String(model ?? "");
+  return NO_SAMPLING_PREFIXES.some((p) => id.startsWith(p));
+}
+
+// A 400 whose message names a sampling parameter — the signal to retry without
+// it. Anthropic phrases these as "temperature: ... unexpected" / "not
+// supported"; match the param names defensively rather than the exact prose.
+function isSamplingParamError(err) {
+  if (err?.code !== "PROVIDER_HTTP" || err?.details?.status !== 400) return false;
+  const body = err.details.body;
+  const msg = (typeof body === "string" ? body : JSON.stringify(body ?? "")).toLowerCase();
+  return /temperature|top_p|top_k|sampling/.test(msg);
+}
 
 export class AnthropicAdapter extends Adapter {
   constructor(cfg = {}) {
@@ -33,18 +61,38 @@ export class AnthropicAdapter extends Adapter {
     const body = {
       model: req.model,
       max_tokens: req.maxTokens ?? 1024,
-      temperature: req.temperature ?? 0,
       messages: req.messages.filter((m) => m.role !== "system"),
     };
+    // Only send temperature to models that accept it (default 0 for judge
+    // determinism); omit it entirely for the current-gen models that reject
+    // it. Callers always request 0 — omitting means the model runs at its own
+    // default, which for these reasoning models is the only supported setting.
     if (system) body.system = system;
     if (req.schema) {
       body.tools = [{ name: "emit", description: "Emit the structured judgment.", input_schema: req.schema }];
       body.tool_choice = { type: "tool", name: "emit" };
     }
-    const raw = await httpJSON("POST", `${this.baseUrl}/v1/messages`, {
-      headers: { "x-api-key": this.apiKey, "anthropic-version": API_VERSION },
-      body,
-    });
+    const post = (sampling) => {
+      const b = sampling ? { ...body, temperature: req.temperature ?? 0 } : body;
+      return httpJSON("POST", `${this.baseUrl}/v1/messages`, {
+        headers: { "x-api-key": this.apiKey, "anthropic-version": API_VERSION },
+        body: b,
+      });
+    };
+    let raw;
+    if (rejectsSampling(req.model)) {
+      raw = await post(false);
+    } else {
+      try {
+        raw = await post(true);
+      } catch (err) {
+        // Backstop for a rejecter the prefix list doesn't know yet: one retry
+        // without the sampling param. A 400 is non-retryable at the Pool, so
+        // this is the only place it can self-heal.
+        if (!isSamplingParamError(err)) throw err;
+        raw = await post(false);
+      }
+    }
     // A 200 with an empty/HTML/shapeless body must not TypeError downstream.
     if (!raw || !Array.isArray(raw.content)) throw malformedResponse("anthropic", raw);
     const blocks = raw.content;

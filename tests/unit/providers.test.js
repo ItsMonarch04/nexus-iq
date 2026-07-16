@@ -414,6 +414,59 @@ describe("AnthropicAdapter", () => {
     );
   });
 
+  it("omits temperature for current-gen models that reject it (opus-4-8), keeps it for models that accept it", async () => {
+    // Opus 4.8 rejects sampling params with a hard 400 — the body must not carry one.
+    await withServer(
+      () => anthropicToolResponse({ rationale: "r", label: "pay", confidence: 0.5 }),
+      async (srv) => {
+        const adapter = new AnthropicAdapter({ apiKey: "k", baseUrl: srv.url });
+        await adapter.complete({
+          model: "claude-opus-4-8",
+          messages: [{ role: "user", content: "x" }],
+          schema: judgeSchema, temperature: 0, maxTokens: 64,
+        });
+        assert.equal("temperature" in srv.calls[0].body, false, "opus-4-8 body must omit temperature");
+      },
+    );
+    // Sonnet 4.6 still accepts it → determinism is preserved (temperature: 0).
+    await withServer(
+      () => anthropicToolResponse({ rationale: "r", label: "pay", confidence: 0.5 }),
+      async (srv) => {
+        const adapter = new AnthropicAdapter({ apiKey: "k", baseUrl: srv.url });
+        await adapter.complete({
+          model: "claude-sonnet-4-6",
+          messages: [{ role: "user", content: "x" }],
+          schema: judgeSchema, temperature: 0, maxTokens: 64,
+        });
+        assert.equal(srv.calls[0].body.temperature, 0, "sonnet-4-6 must still send temperature 0");
+      },
+    );
+  });
+
+  it("self-heals a sampling-param 400 on an unlisted model: retries once without it", async () => {
+    await withServer(
+      (call) => {
+        // first attempt carries temperature and is rejected; retry must omit it
+        if (call.body.temperature !== undefined) {
+          return { status: 400, body: { type: "error", error: { type: "invalid_request_error", message: "temperature: unexpected parameter for this model" } } };
+        }
+        return anthropicToolResponse({ rationale: "r", label: "pay", confidence: 0.5 });
+      },
+      async (srv) => {
+        const adapter = new AnthropicAdapter({ apiKey: "k", baseUrl: srv.url });
+        // a model NOT in the prefix list — only the 400 retry can save it
+        const res = await adapter.complete({
+          model: "claude-zephyr-9",
+          messages: [{ role: "user", content: "x" }],
+          schema: judgeSchema, temperature: 0, maxTokens: 64,
+        });
+        assert.equal(srv.calls.length, 2, "one rejected attempt + one retry");
+        assert.equal("temperature" in srv.calls[1].body, false, "retry must drop the sampling param");
+        assert.equal(res.json.label, "pay");
+      },
+    );
+  });
+
   it("plain completion sends no tools and returns text", async () => {
     await withServer(
       () => ({
@@ -573,8 +626,8 @@ describe("AnthropicAdapter.catalog (live)", () => {
           "claude-opus-4-8-20260515", "claude-sonnet-4-6-20260219", "claude-flux-9-0-20260601",
         ]);
         // opus snapshot inherited the static opus pricing + ctx by prefix
-        assert.deepEqual(byId["claude-opus-4-8-20260515"].pricing, { inUSDper1M: 15, outUSDper1M: 75 });
-        assert.equal(byId["claude-opus-4-8-20260515"].ctx, 200_000);
+        assert.deepEqual(byId["claude-opus-4-8-20260515"].pricing, { inUSDper1M: 5, outUSDper1M: 25 });
+        assert.equal(byId["claude-opus-4-8-20260515"].ctx, 1_000_000);
         assert.equal(byId["claude-opus-4-8-20260515"].name, "Claude Opus 4.8");
         assert.equal(byId["claude-opus-4-8-20260515"].family, "anthropic");
         assert.equal(byId["claude-opus-4-8-20260515"].snapshot, "claude-opus-4-8-20260515");
@@ -761,7 +814,7 @@ describe("OpenAIAdapter.catalog (live)", () => {
         assert.equal(call.headers.authorization, "Bearer sk-oai-live");
         return modelsList([
           "gpt-5.2",                  // exact static match
-          "gpt-5.2-mini-2026-05-01",  // dated → prefix-match gpt-5.2-mini
+          "gpt-5-mini-2026-05-01",    // dated → prefix-match gpt-5-mini
           "gpt-6-preview",            // chat, but no static entry → honest unknown
           "o4-mini",                  // o-series reasoning → chat-capable
           "chatgpt-4o-latest",        // chatgpt prefix → chat
@@ -781,16 +834,16 @@ describe("OpenAIAdapter.catalog (live)", () => {
         const adapter = new OpenAIAdapter({ apiKey: "sk-oai-live", baseUrl: srv.url });
         const cat = await adapter.catalog();
         const ids = cat.map((m) => m.id);
-        assert.deepEqual(ids, ["gpt-5.2", "gpt-5.2-mini-2026-05-01", "gpt-6-preview", "o4-mini", "chatgpt-4o-latest"],
+        assert.deepEqual(ids, ["gpt-5.2", "gpt-5-mini-2026-05-01", "gpt-6-preview", "o4-mini", "chatgpt-4o-latest"],
           "only chat-capable families survive, in list order");
 
         const byId = Object.fromEntries(cat.map((m) => [m.id, m]));
-        assert.deepEqual(byId["gpt-5.2"].pricing, { inUSDper1M: 1.25, outUSDper1M: 10 });
+        assert.deepEqual(byId["gpt-5.2"].pricing, { inUSDper1M: 1.75, outUSDper1M: 14 });
         assert.equal(byId["gpt-5.2"].ctx, 400_000);
         assert.equal(byId["gpt-5.2"].family, "openai");
         // dated mini snapshot inherits mini pricing by prefix
-        assert.deepEqual(byId["gpt-5.2-mini-2026-05-01"].pricing, { inUSDper1M: 0.25, outUSDper1M: 2 });
-        assert.equal(byId["gpt-5.2-mini-2026-05-01"].snapshot, "gpt-5.2-mini-2026-05-01");
+        assert.deepEqual(byId["gpt-5-mini-2026-05-01"].pricing, { inUSDper1M: 0.25, outUSDper1M: 2 });
+        assert.equal(byId["gpt-5-mini-2026-05-01"].snapshot, "gpt-5-mini-2026-05-01");
         // unknown chat model → honest unknown
         assert.deepEqual(byId["gpt-6-preview"].pricing, { inUSDper1M: 0, outUSDper1M: 0 });
         assert.equal(byId["gpt-6-preview"].ctx, null);
@@ -802,13 +855,13 @@ describe("OpenAIAdapter.catalog (live)", () => {
     );
   });
 
-  it("longest-prefix wins: gpt-5.2-mini beats gpt-5.2 for a mini snapshot", async () => {
+  it("longest-prefix wins: gpt-5-mini beats gpt-5 for a mini snapshot", async () => {
     await withServer(
-      () => modelsList(["gpt-5.2-mini"]),
+      () => modelsList(["gpt-5-mini"]),
       async (srv) => {
         const adapter = new OpenAIAdapter({ apiKey: "k", baseUrl: srv.url });
         const cat = await adapter.catalog();
-        // must pick the mini row (0.25/2), not the gpt-5.2 row (1.25/10)
+        // must pick the mini row (0.25/2), not the gpt-5.2 row (1.75/14)
         assert.deepEqual(cat[0].pricing, { inUSDper1M: 0.25, outUSDper1M: 2 });
       },
     );
@@ -820,7 +873,7 @@ describe("OpenAIAdapter.catalog (live)", () => {
       async (srv) => {
         const adapter = new OpenAIAdapter({ apiKey: "k", baseUrl: srv.url });
         const cat = await adapter.catalog();
-        assert.deepEqual(cat.map((m) => m.id), ["gpt-5.2", "gpt-5.2-mini"]);
+        assert.deepEqual(cat.map((m) => m.id), ["gpt-5.2", "gpt-5-mini"]);
         for (const m of cat) assert.equal(m.estimate, true);
       },
     );
@@ -833,7 +886,7 @@ describe("OpenAIAdapter.catalog (live)", () => {
     try {
       const cat = await new OpenAIAdapter({}).catalog();
       assert.equal(fetches, 0, "keyless catalog must not hit the network");
-      assert.deepEqual(cat.map((m) => m.id), ["gpt-5.2", "gpt-5.2-mini"]);
+      assert.deepEqual(cat.map((m) => m.id), ["gpt-5.2", "gpt-5-mini"]);
     } finally {
       globalThis.fetch = realFetch;
     }
@@ -1722,6 +1775,35 @@ describe("registry privacy gates", () => {
       assert.equal(fetches, 0);
     } finally {
       globalThis.fetch = realFetch;
+    }
+  });
+
+  it("strict rejects a remote ollama baseUrl; loopback baseUrls pass", () => {
+    const dir = mkdtempSync(join(tmpdir(), "nexus-iq-strict-ollama-"));
+    const keysAt = (baseUrl) => {
+      const p = join(dir, `keys-${Buffer.from(baseUrl).toString("hex").slice(0, 12)}.json`);
+      writeFileSync(p, JSON.stringify({ ollama: { baseUrl } }), "utf8");
+      return p;
+    };
+    try {
+      const strict = { privacyMode: "strict" };
+      // provider NAME is not proof of locality — the endpoint must be loopback
+      for (const remote of ["http://192.168.1.20:11434", "https://ollama.example.com", "http://my-box.local:11434", "not a url"]) {
+        assert.throws(
+          () => getAdapter(strict, "ollama", { keysPath: keysAt(remote) }),
+          (err) => err.code === "PRIVACY_BLOCKED" && /loopback/i.test(err.message),
+          `strict must refuse ollama at ${remote}`,
+        );
+      }
+      for (const local of ["http://localhost:11434", "http://127.0.0.1:11434", "http://127.1.2.3:11434", "http://[::1]:11434"]) {
+        const { adapter } = getAdapter(strict, "ollama", { keysPath: keysAt(local) });
+        assert.ok(adapter instanceof OllamaAdapter, `strict must allow ollama at ${local}`);
+      }
+      // the SAME remote endpoint stays reachable under "open" — strict-only gate
+      const open = getAdapter({ privacyMode: "open" }, "ollama", { keysPath: keysAt("http://192.168.1.20:11434") });
+      assert.ok(open.adapter instanceof OllamaAdapter);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 
