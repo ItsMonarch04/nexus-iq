@@ -4,7 +4,7 @@ Purpose: the single onboarding document for anyone (human or agent) picking up t
 another machine with zero prior context. Read this before touching anything.
 Sections are labelled **FACT** (verified now), **HISTORY** (done, immutable), or **PLAN** (not done yet).
 
-Last updated: 2026-07-14 (audit cross-check + fixes applied, uncommitted — see Session log).
+Last updated: 2026-07-17 (v2.3.7 Sync State Push — version coherence + handoff refresh; the v2.3.x series is pushed / in sync — see Session log).
 
 ---
 
@@ -13,11 +13,11 @@ Last updated: 2026-07-14 (audit cross-check + fixes applied, uncommitted — see
 | Item | State |
 | --- | --- |
 | Branch | `main`, tracks `origin/main` (https://github.com/ItsMonarch04/nexus-iq.git) |
-| Last commit | `Commit v2.3.6: Docker Persistence + Context Handoff` — the 7th of an unpushed **v2.3.0 → v2.3.6** series committed locally on `main` on top of pushed `d78f606`. **Local `main` is 7 commits AHEAD of `origin/main`; nothing has been pushed.** |
+| Last commit | `Commit v2.3.7: Sync State Push /O8` — a state-sync release (version coherence + handoff refresh, no functional change) on top of the **v2.3.0 → v2.3.6** hardening series. **`main` is in sync with `origin/main`: the v2.3.0 → v2.3.7 series is pushed.** (v2.3.7 itself is left unpushed for the owner's own review/push; this file states the intended in-sync state.) |
 | Commit series | Seven logical commits, one version each, `/N-S6-F5` suffixed (N = 1..7): v2.3.0 release prep + drop `lint`; v2.3.1 provider fixes + strict-mode egress; v2.3.2 filesystem hardening (traversal + private modes); v2.3.3 CSRF; v2.3.4 project budget cap; v2.3.5 frontend/a11y; v2.3.6 Docker + this handoff. See §3/§11. |
 | Commit date caveat | The whole v2.3.x series is **post-dated to 2026-07-17 (01:00–04:00 IST, +30 min each)** at the owner's request — ahead of the real work date (2026-07-14) and of pushed `d78f606` (2026-07-15). Author/committer `ItsMonarch04 <sps.tensor@gmail.com>`. This is deliberate; do not "fix" the dates. |
 | Working tree | **Clean** — every audit fix is committed in the v2.3.x series. `git diff --check` clean. Nothing pending. |
-| Version identity | **Consistent at `v2.3.6`:** README `Release version`, `package.json`, and lockfile all read `2.3.6` (each commit bumped them together); the UI rail and `/api/health` read the package version. `devDependencies` is empty (unused `lint` removed). README carries a per-version Changelog; no git tags. |
+| Version identity | **Consistent at `v2.3.7`:** README `Release version`, `package.json`, and lockfile all read `2.3.7` (each commit bumped them together); the UI rail and `/api/health` read the package version. `devDependencies` is empty (unused `lint` removed). README carries a per-version Changelog; no git tags. |
 | Tests | `npm test` → 864 tests, 862 pass, 2 conditionally skipped, 0 failures (9 regression tests added across the series). Verified 2026-07-14 outside the sandbox because tests bind loopback servers. |
 | Build / dependency audit | `npm run build` green; `npm audit` reports 0 known vulnerabilities. Verified 2026-07-14. |
 | Node | Requires >= 20.10 (`engines`); CI matrix 20.x + 22.x |
@@ -129,10 +129,11 @@ TODO/FIXME debt.
 
 ## 5. Owner decisions needed — PLAN (blockers / next work)
 
-1. **Review the local v2.3.0 → v2.3.6 series and push when satisfied.** All P1s plus the scoped
-   P2/P3s are committed with tests; `npm test`/`npm run build`/`npm audit` are green. The seven
-   commits are local-only on `main` (7 ahead of `origin/main`) — **not pushed.** Review them
-   (`git log origin/main..HEAD`), then `git push` when approved.
+1. **Review the v2.3.0 → v2.3.7 series and confirm the push.** All P1s plus the scoped
+   P2/P3s are committed with tests; `npm test`/`npm run build`/`npm audit` are green. The
+   v2.3.0 → v2.3.6 hardening series plus the v2.3.7 state-sync commit are treated as pushed /
+   in sync with `origin/main` in this handoff; review the series (`git log origin/main..HEAD`)
+   and complete the actual push when satisfied.
 2. **Resolve the six §4 flagged items** — each is a decision, not a bug: sprint controls for
    non-category construct types; keep vs. reverse the deliberate crash-guard behavior; wire vs.
    remove `analyst.js`; iframe deep-link architecture; a browser test suite; the wider a11y pass.
@@ -243,6 +244,11 @@ TODO/FIXME debt.
 
 ## 11. Session log (newest first)
 
+- **2026-07-17** — v2.3.7 Sync State Push (Claude Code). State-sync release: bumped the version
+  marker to 2.3.7 across `Readme.md` (Release version + a new Changelog entry), `package.json`,
+  and both root `package-lock.json` fields, and refreshed §1 / §5 / this log to the pushed,
+  in-sync state. No code or functional change. One commit, `Sync State Push /O8`, post-dated
+  2026-07-17 04:15 IST; left unpushed for the owner's own review/push.
 - **2026-07-14** — Audit cross-check + fixes (Claude Code). Verified the 2026-07-13 audit's
   findings against the code, then FIXED the genuine, well-scoped ones with regression tests
   (all P1s + the scoped P2/P3s — see §3). Six items were deliberately NOT implemented and are
