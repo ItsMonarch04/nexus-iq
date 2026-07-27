@@ -4,7 +4,7 @@ Purpose: the single onboarding document for anyone (human or agent) picking up t
 another machine with zero prior context. Read this before touching anything.
 Sections are labelled **FACT** (verified now), **HISTORY** (done, immutable), or **PLAN** (not done yet).
 
-Last updated: 2026-07-17 (v2.3.7 Sync State Push — version coherence + handoff refresh; the v2.3.x series is pushed / in sync — see Session log).
+Last updated: 2026-07-19 (implementation + verification session, committed as the **v2.4.0 → v2.4.4** series; local-only, unpushed).
 
 ---
 
@@ -13,13 +13,13 @@ Last updated: 2026-07-17 (v2.3.7 Sync State Push — version coherence + handoff
 | Item | State |
 | --- | --- |
 | Branch | `main`, tracks `origin/main` (https://github.com/ItsMonarch04/nexus-iq.git) |
-| Last commit | `Commit v2.3.7: Sync State Push /O8` — a state-sync release (version coherence + handoff refresh, no functional change) on top of the **v2.3.0 → v2.3.6** hardening series. **`main` is in sync with `origin/main`: the v2.3.0 → v2.3.7 series is pushed.** (v2.3.7 itself is left unpushed for the owner's own review/push; this file states the intended in-sync state.) |
-| Commit series | Seven logical commits, one version each, `/N-S6-F5` suffixed (N = 1..7): v2.3.0 release prep + drop `lint`; v2.3.1 provider fixes + strict-mode egress; v2.3.2 filesystem hardening (traversal + private modes); v2.3.3 CSRF; v2.3.4 project budget cap; v2.3.5 frontend/a11y; v2.3.6 Docker + this handoff. See §3/§11. |
-| Commit date caveat | The whole v2.3.x series is **post-dated to 2026-07-17 (01:00–04:00 IST, +30 min each)** at the owner's request — ahead of the real work date (2026-07-14) and of pushed `d78f606` (2026-07-15). Author/committer `ItsMonarch04 <sps.tensor@gmail.com>`. This is deliberate; do not "fix" the dates. |
-| Working tree | **Clean** — every audit fix is committed in the v2.3.x series. `git diff --check` clean. Nothing pending. |
-| Version identity | **Consistent at `v2.3.7`:** README `Release version`, `package.json`, and lockfile all read `2.3.7` (each commit bumped them together); the UI rail and `/api/health` read the package version. `devDependencies` is empty (unused `lint` removed). README carries a per-version Changelog; no git tags. |
-| Tests | `npm test` → 864 tests, 862 pass, 2 conditionally skipped, 0 failures (9 regression tests added across the series). Verified 2026-07-14 outside the sandbox because tests bind loopback servers. |
-| Build / dependency audit | `npm run build` green; `npm audit` reports 0 known vulnerabilities. Verified 2026-07-14. |
+| Last commit | `Commit v2.4.4: Version Coherence + Handoff /5-T6-F5` — final commit of the **v2.4.0 → v2.4.4** series on top of pushed `fe64689` (v2.3.7). **`main` is 5 commits ahead of `origin/main`; not pushed** — the owner pushes after review. |
+| Commit series | Five logical commits, one version each, `/N-T6-F5` suffixed (N = 1..5): v2.4.0 non-category human coding; v2.4.1 analyst suggestions route + opt-in UI; v2.4.2 iframe route/title bridge + evidence-door focus; v2.4.3 atomic project-cap reservation; v2.4.4 version coherence + this handoff. (The earlier seven-commit v2.3.x `/N-S6-F5` series is described in §3/§11.) |
+| Commit date caveat | Owner-directed post-dating continues: the v2.3.x series is dated 2026-07-17 (real work 2026-07-14) and the v2.4.x series is **post-dated to 2026-07-28 (00:30–02:30 IST, +30 min each)** against a real work date of 2026-07-19. Author/committer `ItsMonarch04 <sps.tensor@gmail.com>`. This is deliberate; do not "fix" the dates. |
+| Working tree | **Clean.** The 2026-07-19 implementation sweep is fully committed in the v2.4.x series; nothing is staged and `git diff --check` passes. |
+| Version identity | **Consistent at `v2.4.4`:** README `Release version`, `package.json`, and lockfile all read `2.3.7` (each commit bumped them together); the UI rail and `/api/health` read the package version. `devDependencies` is empty (unused `lint` removed). README carries a per-version Changelog; no git tags. |
+| Tests | `npm test` → 866 tests, 864 pass, 2 conditionally skipped, 0 failures. Verified 2026-07-19 in a loopback-capable environment. Focused `gold-integrity` regression test: 10/10 pass. |
+| Build / dependency audit | `npm run build` green on Next 16.2.10; live `npm audit --omit=dev` reports 0 known vulnerabilities. Verified 2026-07-19. |
 | Node | Requires >= 20.10 (`engines`); CI matrix 20.x + 22.x |
 | CI | `.github/workflows/ci.yml`: npm ci → build → test → `npm audit` (report-only) on push/PR to main |
 
@@ -75,53 +75,50 @@ Everything works offline via the deterministic **MockModel** provider; real prov
   `components/inspector.js`, `main.js`, `pages/index.js`). Ops: Docker volumes + prod-only
   install + port/version cleanup + healthcheck; unused `lint` devDependency removed.
 
-## 4. Backlog — FACT (2026-07-14: the genuine, scoped defects are FIXED in §3; what remains here is flagged for owner decision)
+- **v2.4.0 → v2.4.4 (committed locally on `main`, unpushed; post-dated 2026-07-28):** the
+  2026-07-19 sweep that resolved every §4 flagged item, split into five `/N-T6-F5` commits —
+  v2.4.0 non-category human coding (sprint + blind coder: continuous, multilabel,
+  extraction), v2.4.1 analyst suggestions (guarded route + opt-in run-detail UI), v2.4.2
+  iframe route/title bridge + keyboard evidence doors, v2.4.3 atomic project-cap
+  reservation/settlement, v2.4.4 version coherence + this handoff. Version surfaces
+  (`Readme.md` release marker + Changelog, `package.json`, lockfile) moved every commit.
 
-Every P1 from the prior audit and most P2/P3s were fixed this session with regression tests
-(§3, §11). The items below were deliberately **not** implemented — each needs an owner decision
-or is a larger feature/idea, not a contained bug fix.
+## 4. Backlog — FACT (2026-07-19: prior flagged items resolved or deliberately classified)
 
-1. **Human-coding UI for `continuous` / `multilabel` / `extraction` in the in-app sprint —
-   FLAGGED (genuine gap, needs UX design).** The standalone coder (`public/app/js/coder.js`)
-   already renders a numeric/text field for scale/free types, but the full-bleed **sprint**
-   (`screens/calibration.js`) offers only single category buttons — a continuous construct has
-   no way to enter a number there, and `multilabel` is coded as single-choice in both coders.
-   The server accepts multilabel arrays and bounded continuous values (`routes/goldsets.js`).
-   Not fixed because multi-select + numeric entry in a keyboard-shortcut sprint (1–9 = category)
-   is a feature with real interaction-design choices, not a one-line fix. **Decision needed:**
-   design the sprint controls for non-category types (or gate those types out of the sprint).
-2. **`uncaughtException`/`unhandledRejection` log-and-continue — FLAGGED (do not reverse without
-   owner sign-off).** `server/index.js` deliberately logs and keeps the process alive; the code
-   comment, §3 History ("process crash guards"), and `tests/server/lifecycle.test.js` all treat
-   this as an intentional decision for a single long-lived local process whose job is to keep
-   background runs alive. The audit's "exit on uncaught" reverses that. **Decision needed:**
-   keep the deliberate behavior, or move to exit-and-supervise (which also rewrites the test).
-3. **`server/director/analyst.js` "dead" only at runtime — FLAGGED.** It is imported by tests
-   (`tests/unit/director.test.js`, `tests/integration/orchestration.test.js`) and implements
-   post-run analysis suggestions — a built, tested feature that simply has no route wiring yet.
-   Removing it deletes the feature. **Decision needed:** wire it into a route (future product
-   work) or remove it deliberately. (The other half of the prior "dead surface" item — the
-   unused `lint` devDependency — WAS removed; see §3.)
-4. **Deep-link / title sync through the Next iframe — FLAGGED (architecture).** The app's inner
-   hash route and `document.title` still live inside the iframe, so a copied top-level URL or a
-   reload lands on the app root. A real fix means serving the app directly or bridging
-   parent↔child route state — a change to the intentional "Next shell hosts an iframe"
-   architecture (§2). This session added only the safe, non-architectural part: an iframe
-   `title` for an accessible name.
-5. **Browser/DOM regression suite (Playwright + axe) — FLAGGED (already a §6 idea).** `npm test`
-   stays Node-only, so the frontend fixes in §3 (sheet finalizer, inspector ordering/inert,
-   nav-race store gate, theme state) are not guarded by CI. This is the §6 "axe/keyboard a11y
-   pass" idea; scoping it is an owner call.
-6. **Broader keyboard-focusability a11y pass — PARTIAL / FLAGGED.** This session added the safe,
-   contained parts (Space activation + `inert` on the closed inspector). Making every
-   `<figure>` evidence door itself focusable (tabindex + role) across the app is the wider a11y
-   pass in §6.
-7. **Concurrent-run project-cap reservation — NOTE (partial by design).** The engine now enforces
-   the project cap for a single run including its retries/escalation (§3). Two runs launched
-   concurrently still each read `spentUSD` from their own snapshot, so they can race; a truly
-   atomic headroom reservation is a deeper change left for the owner to prioritize.
+The seven items that were previously waiting for an owner decision were revisited. The contained
+product gaps are implemented and committed in the v2.4.0–v2.4.4 series; the one policy choice
+is now explicit.
 
-Explicitly checked and still not issues: 862-test suite + production build health; `npm audit`
+1. **Human coding for non-category constructs — RESOLVED.** Both the blind coder and the
+   full-bleed sprint now support bounded numeric labels for `continuous`, true toggle-and-submit
+   sets for `multilabel`, and one-verbatim-span-per-line submissions for `extraction` (including
+   an intentional empty span array). The latter matches judge output shape while preserving
+   legacy free-text data acceptance. `tests/server/gold-integrity.test.js` covers span arrays.
+2. **Crash guard policy — DECIDED: retain log-and-continue.** Nexus IQ is a single long-lived
+   local process whose background runs should survive an unexpected handler failure. The existing
+   code/comments/lifecycle test consistently implement that policy. Exit-and-supervise is a
+   different deployment architecture, not an incidental correctness fix.
+3. **Analyst suggestions — RESOLVED.** A completed run can now request Director-backed analysis
+   suggestions through a guarded route. The UI makes each proposed analysis opt-in: the researcher
+   can dismiss it or explicitly create it; no suggestion auto-creates an artifact.
+4. **Iframe route and title state — RESOLVED.** The Next host and same-origin app exchange a
+   constrained route/title message. Parent URL/history carries the inner route, Back/Forward
+   restores it, and an initial-load handshake closes the message-listener race. Browser-verified
+   on 2026-07-19 for deep links, title sync, and Back navigation.
+5. **Keyboard evidence doors — RESOLVED.** Quote evidence figures are focusable button-like
+   controls with an accessible name and visible focus styling; existing SVG charts and native
+   controls were checked for their own keyboard paths.
+6. **Concurrent project-cap admission — RESOLVED.** Starts/resumes atomically reserve each run's
+   estimated remaining headroom under the project lock; settlement releases that reservation and
+   books actual spend in the same mutation. The focused metering regression coverage and full
+   test suite pass.
+7. **Browser/DOM automation — intentionally optional, not a known product defect.** No Playwright
+   or axe dependency was added solely to turn a quality-investment idea into CI scope. The affected
+   behaviors received static/server regression coverage where applicable plus a real browser
+   verification this session. A dedicated accessibility acceptance suite remains a §6 investment
+   for a public-web release, not a blocker for the local product.
+
+Explicitly checked and still not issues: 866-test suite + production build health; `npm audit`
 0 vulnerabilities; XSS-safe DOM call sites (`html:` escape hatch has zero users); NDJSON
 torn-tail/concurrency protections; static-file containment; response error redaction; report
 escaping; CSV formula hardening; `.gitignore`/`.gitattributes`; font and VADER licensing; no
@@ -129,14 +126,12 @@ TODO/FIXME debt.
 
 ## 5. Owner decisions needed — PLAN (blockers / next work)
 
-1. **Review the v2.3.0 → v2.3.7 series and confirm the push.** All P1s plus the scoped
-   P2/P3s are committed with tests; `npm test`/`npm run build`/`npm audit` are green. The
-   v2.3.0 → v2.3.6 hardening series plus the v2.3.7 state-sync commit are treated as pushed /
-   in sync with `origin/main` in this handoff; review the series (`git log origin/main..HEAD`)
-   and complete the actual push when satisfied.
-2. **Resolve the six §4 flagged items** — each is a decision, not a bug: sprint controls for
-   non-category construct types; keep vs. reverse the deliberate crash-guard behavior; wire vs.
-   remove `analyst.js`; iframe deep-link architecture; a browser test suite; the wider a11y pass.
+1. **Review the v2.4.0 → v2.4.4 series and confirm the push.** The v2.3.x series is pushed;
+   `main` is now 5 local commits ahead of `origin/main` with the v2.4.x series (`npm test`
+   866/864 green, build green, `npm audit --omit=dev` 0 findings, all verified 2026-07-19
+   pre-commit). Review `git log origin/main..HEAD` and complete the push when satisfied.
+2. **No unresolved implementation blocker remains from §4.** The only non-code follow-up is to
+   decide when a dedicated browser accessibility suite is justified for a public-web release.
 3. Decide npm publication intent. `package.json` says `private: false`, but there is no entry
    point, package allowlist, or publish workflow. Do not flip the flag or invent policy.
 4. Accept the recorded future-dated `d78f606` history or explicitly request a history action.
@@ -244,6 +239,21 @@ TODO/FIXME debt.
 
 ## 11. Session log (newest first)
 
+- **2026-07-19** — v2.4.0 → v2.4.4 committed (Fable 5). Split the verified working tree into
+  five logical commits (`/N-T6-F5`, post-dated 2026-07-28 00:30–02:30 IST, author
+  `ItsMonarch04`): non-category coding; analyst suggestions; iframe bridge + evidence-door
+  focus; atomic cap reservation; version coherence + handoff. The intermediate analyst commit
+  carries a self-contained route/UI subset; the reservation commit completes the shared
+  import/roll-up refactor. Full `npm test` re-run pre-commit: 866 total, 864 pass, 2 intended
+  skips. Local only — not pushed.
+- **2026-07-19** — Context implementation + verification (Codex). Left all changes deliberately
+  uncommitted. Implemented continuous, multilabel, and extraction controls for both human-coding
+  surfaces; wired opt-in post-run analysis suggestions; synchronized iframe route/title state
+  with a same-origin initial-load handshake; made quote evidence doors keyboard reachable; and
+  replaced snapshot-only project-cap admission with atomic per-run reservations plus atomic
+  settlement. Retained the documented crash-guard policy after review. Verified `npm test`
+  (866 total: 864 pass, 2 intended skips), focused gold-integrity coverage (10/10), production
+  build, live dependency audit (0 vulnerabilities), and browser deep-link/title/Back behavior.
 - **2026-07-17** — v2.3.7 Sync State Push (Claude Code). State-sync release: bumped the version
   marker to 2.3.7 across `Readme.md` (Release version + a new Changelog entry), `package.json`,
   and both root `package-lock.json` fields, and refreshed §1 / §5 / this log to the pushed,
