@@ -289,3 +289,13 @@ TODO/FIXME debt.
   whose only extra delta normalizes two raw NUL separators and whose Git date is 2026-07-15.
 - **2026-07-09** — v2.1.1 → v2.1.4: audit-fix rounds + CI/lockfile repairs (see History).
 - **2026-06-29** — v2.1.0 rebrand/build re-baseline; repo history starts here.
+
+---
+
+## Owner action items — outstanding (as of 2026-07-22)
+
+Repo state confirmed: `main` (`6c91da1a`) matches `origin/main` at **v2.4.4**. (§1 and the 2026-07-19 session log entries still say "5 commits ahead of `origin/main`; not pushed" — that is now stale; v2.4.0–v2.4.4 are pushed and in sync.) Every §4 flagged item is resolved and committed. Nothing implementation-side remains; every item below is a policy call only you can make:
+
+1. **npm publication intent.** `package.json` says `private: false`, but there is no entry point, `files` allowlist, or publish workflow. Either flip to `private: true` (matches actual behaviour) or write the publish policy — do not leave the mismatch.
+2. **Future-dated `d78f606` (v2.2.0) history.** Recorded, pushed, uncorrected. Either accept as-is or explicitly request a history action. Default recommendation from §5: leave pushed history untouched and keep the clock correct for future commits.
+3. **Dedicated browser accessibility acceptance suite.** Not needed for the local product; decide when it is justified for a public-web release (§6 investment; §4 item 7 flagged it as intentionally optional).
