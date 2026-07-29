@@ -2,7 +2,7 @@
 
 Nexus IQ is a local-first qualitative text measurement platform. It combines a Next.js shell with a Node backend so teams can move from exploratory reading to calibrated, evidence-linked analysis without depending on a hosted service by default.
 
-**Release version:** `v2.4.5`
+**Release version:** `v2.5.0`
 
 The product is built around two modes of work:
 
@@ -86,17 +86,21 @@ node --test tests/sim/dsl.sim.test.js
 docker compose up --build
 ```
 
-Then open `http://localhost:3000`. The Compose file mounts named volumes for `projects/` and `config/`, so project bundles, saved provider keys, and settings survive `docker compose down` and container rebuilds. Only port 3000 is published — the backend binds `127.0.0.1` inside the container and the Next.js shell proxies `/api` to it. To start clean, remove the volumes with `docker compose down -v`.
+Then open `http://localhost:3000`. The image includes `demo/` for the documented walkthrough. The Compose file mounts named volumes for `projects/` and `config/`, so project bundles, saved provider keys, and settings survive `docker compose down` and container rebuilds. Only port 3000 is published — the backend binds `127.0.0.1` inside the container and the Next.js shell proxies `/api` to it. To start clean, remove the volumes with `docker compose down -v`.
 
 ## Changelog
 
+### v2.5.0
+
+- Public-facing audit PF-A1: `README.md` casing normalized, `package.json` set `private: true` with OSS metadata, Docker image includes `demo/` for the documented walkthrough. No product-math change.
+
 ### v2.4.5
 
-- External action sync: version marker bumped to 2.4.5 across `Readme.md`, `package.json`, and the root `package-lock.json` entries; `CONTEXT.md` refreshed with a consolidated Owner action items list at the end (npm publication policy, future-dated `d78f606` history, browser a11y suite go/no-go). No functional change.
+- External action sync: version marker bumped to 2.4.5 across `README.md`, `package.json`, and the root `package-lock.json` entries. No functional change.
 
 ### v2.4.4
 
-- Version coherence + handoff: version marker aligned across `Readme.md`, `package.json`, and the root `package-lock.json` entries; `CONTEXT.md` refreshed to the committed v2.4.x state. No functional change.
+- Version coherence + handoff: version marker aligned across `README.md`, `package.json`, and the root `package-lock.json` entries. No functional change.
 
 ### v2.4.3
 
@@ -116,11 +120,11 @@ Then open `http://localhost:3000`. The Compose file mounts named volumes for `pr
 
 ### v2.3.7
 
-- State sync: version marker bumped to 2.3.7 across `Readme.md`, `package.json`, and the root `package-lock.json` entries, and the `CONTEXT.md` handoff refreshed to the pushed, in-sync state. No functional change.
+- State sync: version marker bumped to 2.3.7 across `README.md`, `package.json`, and the root `package-lock.json` entries. No functional change.
 
 ### v2.3.6
 
-- Docker: named volumes persist `projects/` and `config/` across container recreation; production-only install (`npm ci --omit=dev`); dropped the unreachable `EXPOSE 7341`; removed the obsolete Compose `version` key; added a healthcheck. Refreshed the `CONTEXT.md` handoff to the committed v2.3.x state.
+- Docker: named volumes persist `projects/` and `config/` across container recreation; production-only install (`npm ci --omit=dev`); dropped the unreachable `EXPOSE 7341`; removed the obsolete Compose `version` key; added a healthcheck.
 
 ### v2.3.5
 

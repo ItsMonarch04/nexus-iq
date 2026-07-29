@@ -1,10 +1,22 @@
 # CONTEXT.md — Nexus IQ working handoff
 
+## PF-A1 handoff — 2026-07-30 (`v2.5.0` Public-Facing Audit /G4)
+
+**Commit:** `Commit v2.5.0: PF-A1 /G4` at 03:00 IST (post-dated: prior HEAD date +1 day, time +30 min).
+
+**What changed:** Public-facing audit PF-A1: README.md casing normalized, package private:true + OSS metadata, Docker image includes demo/ for documented walkthrough.
+
+**Version state:** `v2.5.0` agrees across `package.json`, lockfile root (where present), README status/release markers, and this file. Prior handoff was `v2.4.5`.
+
+**Working tree intent:** public-readiness hygiene only; no product-math / feature changes in this commit.
+
+---
+
 Purpose: the single onboarding document for anyone (human or agent) picking up this repo on
 another machine with zero prior context. Read this before touching anything.
 Sections are labelled **FACT** (verified now), **HISTORY** (done, immutable), or **PLAN** (not done yet).
 
-Last updated: 2026-07-19 (implementation + verification session, committed as the **v2.4.0 → v2.4.4** series; local-only, unpushed).
+Last updated: 2026-07-30 (PF-A1 / `v2.5.0`).
 
 ---
 
