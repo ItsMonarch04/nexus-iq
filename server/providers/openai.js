@@ -7,9 +7,16 @@ import { Adapter, httpJSON, malformedResponse, mergeCatalogPricing } from "./bas
 // (GPT-5.2 $1.75/$14 · 400K ctx; GPT-5 mini $0.25/$2 · 400K ctx). `gpt-5-mini`
 // is the current small-model id — there is no `gpt-5.2-mini`. Keyless
 // selection targets these ids directly, so a wrong id would 404 the call.
+//
+// `pricingVerifiedAt` is the ISO date of the last human check against the
+// provider's public price sheet. It rides the merged catalog entry to the
+// UI so a wizard can flag anything older than the staleness budget (see
+// routes/catalog.js `freshness.staleAfterDays`). Bump the date whenever
+// you re-verify these numbers.
+const PRICING_VERIFIED_AT = "2026-07-01";
 const STATIC_CATALOG = [
-  { id: "gpt-5.2", name: "GPT-5.2", family: "openai", ctx: 400_000, pricing: { inUSDper1M: 1.75, outUSDper1M: 14 }, snapshot: "gpt-5.2", estimate: true },
-  { id: "gpt-5-mini", name: "GPT-5 mini", family: "openai", ctx: 400_000, pricing: { inUSDper1M: 0.25, outUSDper1M: 2 }, snapshot: "gpt-5-mini", estimate: true },
+  { id: "gpt-5.2", name: "GPT-5.2", family: "openai", ctx: 400_000, pricing: { inUSDper1M: 1.75, outUSDper1M: 14 }, snapshot: "gpt-5.2", estimate: true, pricingVerifiedAt: PRICING_VERIFIED_AT },
+  { id: "gpt-5-mini", name: "GPT-5 mini", family: "openai", ctx: 400_000, pricing: { inUSDper1M: 0.25, outUSDper1M: 2 }, snapshot: "gpt-5-mini", estimate: true, pricingVerifiedAt: PRICING_VERIFIED_AT },
 ];
 
 const CATALOG_TTL_MS = 60 * 60 * 1000; // 1h, matches routes/catalog.js
